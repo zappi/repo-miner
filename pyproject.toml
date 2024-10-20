@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "miner"
+version = "0.1.0"
+description = ""
+authors = ["Jerry Tamlander"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+pydriller = "^2.6"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+miner = "miner.main:main"
