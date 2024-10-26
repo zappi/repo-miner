@@ -1,7 +1,9 @@
+from miner.analyzers.churn_analyzer import analyze_code_churn
 from miner.analyzers.commit_analyzer import analyze_commits
+from miner.analyzers.file_path_analyzer import analyze_file_path
 from miner.analyzers.test_debt_analyzer import analyze_testing_debt
-from miner.user_inputs import get_commit_limit, choose_analyzer, get_date
-from miner.display_results import display_commit_results, display_testing_debt_results
+from miner.user_inputs import get_commit_limit, choose_analyzer, get_date, get_filepath
+from miner.display_results import display_commit_results, display_testing_debt_results, report_code_churn
 from pydriller import Repository
 
 class AnalysisController:
@@ -14,12 +16,12 @@ class AnalysisController:
     def contains_fix_keyword(commit):
         return "fix" in commit.msg.lower()
 
-    def traverse_commits(self, process_commit, filters=None, order="reverse"):
+    def traverse_commits(self, process_commit, filters=None, order="reverse", filepath=None):
         limit = get_commit_limit()
         # since_date = get_date("starting")
         # to_date = get_date("ending")
 
-        for commit in Repository(self.repo_path, order=order, since=None, to=None).traverse_commits():
+        for commit in Repository(self.repo_path, order=order, since=None, to=None, filepath=filepath).traverse_commits():
             if filters:
                 if not all(f(commit) for f in filters):
                     continue
@@ -32,8 +34,8 @@ class AnalysisController:
 
     def run_commit_analyzer(self):
         commit_data = {
-            "single_spec_file_commits": 0,
-            "multiple_spec_file_commits": 0
+            "single_test_file_commits": 0,
+            "multiple_test_file_commits": 0
         }
 
         def process_commit(commit):
@@ -60,6 +62,34 @@ class AnalysisController:
 
         display_testing_debt_results(debt_data)
 
+    def run_code_churn_analyzer(self):
+        churn_data = {
+            "total_commits": 0,
+            "total_lines_added": 0,
+            "total_lines_deleted": 0,
+            "total_files_changed": set(),
+            "file_churn": {}
+        }
+
+        developer_contribution = {}
+
+        def process_commit(commit):
+            analyze_code_churn(commit, churn_data, developer_contribution)
+
+        self.traverse_commits(process_commit)
+
+        report_code_churn(churn_data, developer_contribution)
+
+    def run_code_file_path_analyzer(self):
+        filepath = get_filepath()
+
+        def process_commit(commit):
+            analyze_file_path(commit, filepath)
+
+        self.traverse_commits(process_commit, order="date-order", filepath=filepath)
+
+
+
     def start(self):
         while True:
             analyzer = choose_analyzer()
@@ -68,6 +98,10 @@ class AnalysisController:
                 self.run_commit_analyzer()
             elif analyzer == 2:
                 self.run_test_debt_analyzer()
+            elif analyzer == 3:
+                self.run_code_churn_analyzer()
+            elif analyzer == 4:
+                self.run_code_file_path_analyzer()
 
             run_again = input("\nWould you like to run the analysis again? (y/n): ").strip().lower()
             if run_again != "y":

@@ -14,14 +14,18 @@ def get_commit_limit():
 def choose_analyzer():
     while True:
         try:
-            print("Choose analyzer: 1) Commit analyzer 2) Test debt analyzer")
+            print("Choose analyzer:")
+            print("1) Commit analyzer")
+            print("2) Test debt analyzer")
+            print("3) Churn analyzer")
+            print("4) File path analyzer")
             choice = int(input("Which one?: "))
-            if choice in [1, 2]:
+            if choice in [1, 2, 3, 4]:
                 return choice
             else:
-                print("Please choose 1 or 2.")
+                print("Invalid value")
         except ValueError:
-            print("Invalid input. Please enter 1 or 2.")
+            print("Invalid input. Please enter 1, 2, 3, or 4.")
 
 
 def get_date(prompt):
@@ -36,3 +40,7 @@ def get_date(prompt):
             return date_input
         except ValueError:
             print("Invalid date format. Please enter a valid date in the format YYYY-MM-DD.")
+
+def get_filepath():
+    filepath = input("Enter the filepath: ")
+    return filepath
