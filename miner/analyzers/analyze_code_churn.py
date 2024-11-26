@@ -10,7 +10,6 @@ def analyze_code_churn(commit, churn_data, developer_contribution):
         if any(ignored_file in file_path for ignored_file in ignored_files) or file_path.endswith((".json", ".yml", ".snap", ".md")):
             continue
 
-
         # Calculate relative churn per commit
         total_lines = mod.nloc if mod.nloc else 1
         churned_lines = mod.added_lines + mod.deleted_lines

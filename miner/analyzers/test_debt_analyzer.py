@@ -13,7 +13,6 @@ def analyze_testing_debt(commit, debt_data, test_directories):
             elif any(directory in mod.new_path for directory in test_directories):
                 test_additions += mod.added_lines
 
-
     if feature_additions > 0:
         debt_data["total_feature_additions"] += feature_additions
         if test_additions > 0:

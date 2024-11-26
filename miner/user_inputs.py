@@ -17,7 +17,7 @@ def choose_analyzer():
             print("Choose analyzer:")
             print("1) Commit analyzer")
             print("2) Test debt analyzer")
-            print("3) Churn analyzer")
+            print("3) Code churn analyzer")
             print("4) File path analyzer")
             choice = int(input("Which one?: "))
             if choice in [1, 2, 3, 4]:

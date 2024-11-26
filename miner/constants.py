@@ -1,0 +1,1 @@
+FIX_KEYWORDS = ["fix", "bug", "fail", "error", "problem", "wrong"]

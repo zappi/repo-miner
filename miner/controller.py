@@ -1,7 +1,8 @@
-from miner.analyzers.churn_analyzer import analyze_code_churn
+from miner.analyzers.analyze_code_churn import analyze_code_churn
 from miner.analyzers.commit_analyzer import analyze_commits
 from miner.analyzers.file_path_analyzer import analyze_file_path
 from miner.analyzers.test_debt_analyzer import analyze_testing_debt
+from miner.constants import FIX_KEYWORDS
 from miner.user_inputs import get_commit_limit, choose_analyzer, get_date, get_filepath
 from miner.display_results import display_commit_results, display_testing_debt_results, report_code_churn
 from pydriller import Repository
@@ -14,7 +15,7 @@ class AnalysisController:
 
     @staticmethod
     def contains_fix_keyword(commit):
-        return "fix" in commit.msg.lower()
+        return any(keyword in commit.msg.lower() for keyword in FIX_KEYWORDS)
 
     def traverse_commits(self, process_commit, filters=None, order="reverse", filepath=None):
         limit = get_commit_limit()
@@ -62,7 +63,7 @@ class AnalysisController:
 
         display_testing_debt_results(debt_data)
 
-    def run_code_churn_analyzer(self):
+    def run_code_churn_analyzer(self, churn_type="relative"):
         churn_data = {
             "total_commits": 0,
             "total_lines_added": 0,
@@ -76,9 +77,12 @@ class AnalysisController:
         def process_commit(commit):
             analyze_code_churn(commit, churn_data, developer_contribution)
 
+
         self.traverse_commits(process_commit)
 
+
         report_code_churn(churn_data, developer_contribution)
+
 
     def run_code_file_path_analyzer(self):
         filepath = get_filepath()
@@ -102,6 +106,7 @@ class AnalysisController:
                 self.run_code_churn_analyzer()
             elif analyzer == 4:
                 self.run_code_file_path_analyzer()
+
 
             run_again = input("\nWould you like to run the analysis again? (y/n): ").strip().lower()
             if run_again != "y":
