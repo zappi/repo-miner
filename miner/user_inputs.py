@@ -11,22 +11,20 @@ def get_commit_limit():
         except ValueError:
             print("Invalid input. Please enter a valid number.")
 
-def choose_analyzer():
+def choose_analyzer(analyzers):
     while True:
-        try:
-            print("Choose analyzer:")
-            print("1) Commit analyzer")
-            print("2) Test debt analyzer")
-            print("3) Code churn analyzer")
-            print("4) File path analyzer")
-            choice = int(input("Which one?: "))
-            if choice in [1, 2, 3, 4]:
-                return choice
-            else:
-                print("Invalid value")
-        except ValueError:
-            print("Invalid input. Please enter 1, 2, 3, or 4.")
+        print("Choose an analyzer:")
+        for idx, (name, info) in enumerate(analyzers.items(), start=1):
+            print(f"{idx}) {name} ({info['description']})")
 
+        try:
+            choice = int(input("Which one?: "))
+            if 1 <= choice <= len(analyzers):
+                return list(analyzers.keys())[choice - 1]
+            else:
+                print(f"Please select a number between 1 and {len(analyzers)}.")
+        except ValueError:
+            print("Invalid input. Please enter a valid number.")
 
 def get_date(prompt):
     while True:
@@ -42,5 +40,4 @@ def get_date(prompt):
             print("Invalid date format. Please enter a valid date in the format YYYY-MM-DD.")
 
 def get_filepath():
-    filepath = input("Enter the filepath: ")
-    return filepath
+    return input("Enter the filepath: ")

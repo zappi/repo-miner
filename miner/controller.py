@@ -1,6 +1,7 @@
 from miner.analyzers.analyze_code_churn import analyze_code_churn
 from miner.analyzers.commit_analyzer import analyze_commits
 from miner.analyzers.file_path_analyzer import analyze_file_path
+from miner.analyzers.filter_fix_commits import filter_fix_commits
 from miner.analyzers.test_debt_analyzer import analyze_testing_debt
 from miner.constants import FIX_KEYWORDS
 from miner.user_inputs import get_commit_limit, choose_analyzer, get_date, get_filepath
@@ -13,25 +14,51 @@ class AnalysisController:
         self.test_directories = test_directories
         self.commit_count = 0
 
+        self.analyzers = {
+            "Filtered Fix Commits": {
+                "method": self.filtered_fix_commits,
+                "description": "Find commits which message includes a fix keyword"
+            },
+            "Commit Analyzer": {
+                "method": self.run_commit_analyzer,
+                "description": "Analyzes commits for test file changes and fix keywords"
+            },
+            "Test Debt Analyzer": {
+                "method": self.run_test_debt_analyzer,
+                "description": "Analyzes commits for test additions, feature additions, and testing debt"
+            },
+            "Code Churn Analyzer": {
+                "method": self.run_code_churn_analyzer,
+                "description": "Analyzes code churn metrics across all commits."
+            },
+            "File Path Analyzer": {
+                "method": self.run_code_file_path_analyzer,
+                "description": "Analyzes changes to a specific file path in the repository."
+            }
+        }
+
     @staticmethod
     def contains_fix_keyword(commit):
         return any(keyword in commit.msg.lower() for keyword in FIX_KEYWORDS)
 
     def traverse_commits(self, process_commit, filters=None, order="reverse", filepath=None):
         limit = get_commit_limit()
-        # since_date = get_date("starting")
-        # to_date = get_date("ending")
 
         for commit in Repository(self.repo_path, order=order, since=None, to=None, filepath=filepath).traverse_commits():
-            if filters:
-                if not all(f(commit) for f in filters):
-                    continue
+            if filters and not all(f(commit) for f in filters):
+                continue
 
             if limit and self.commit_count >= limit:
                 break
 
             process_commit(commit)
             self.commit_count += 1
+
+    def filtered_fix_commits(self):
+        def process_commit(commit):
+            filter_fix_commits(commit)
+
+        self.traverse_commits(process_commit, filters=[self.contains_fix_keyword])
 
     def run_commit_analyzer(self):
         commit_data = {
@@ -63,7 +90,7 @@ class AnalysisController:
 
         display_testing_debt_results(debt_data)
 
-    def run_code_churn_analyzer(self, churn_type="relative"):
+    def run_code_churn_analyzer(self):
         churn_data = {
             "total_commits": 0,
             "total_lines_added": 0,
@@ -77,12 +104,8 @@ class AnalysisController:
         def process_commit(commit):
             analyze_code_churn(commit, churn_data, developer_contribution)
 
-
         self.traverse_commits(process_commit)
-
-
         report_code_churn(churn_data, developer_contribution)
-
 
     def run_code_file_path_analyzer(self):
         filepath = get_filepath()
@@ -92,21 +115,11 @@ class AnalysisController:
 
         self.traverse_commits(process_commit, order="date-order", filepath=filepath)
 
-
-
     def start(self):
         while True:
-            analyzer = choose_analyzer()
+            chosen_analyzer = choose_analyzer(self.analyzers)
 
-            if analyzer == 1:
-                self.run_commit_analyzer()
-            elif analyzer == 2:
-                self.run_test_debt_analyzer()
-            elif analyzer == 3:
-                self.run_code_churn_analyzer()
-            elif analyzer == 4:
-                self.run_code_file_path_analyzer()
-
+            self.analyzers[chosen_analyzer]["method"]()
 
             run_again = input("\nWould you like to run the analysis again? (y/n): ").strip().lower()
             if run_again != "y":

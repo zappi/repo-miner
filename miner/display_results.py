@@ -26,32 +26,35 @@ def display_testing_debt_results(results):
             print("=" * 80)
 
 
-
-def classify_churn(churn_data, relative_threshold=0.2):
-    good_relative_churn = []
-    bad_relative_churn = []
-
-    for file_path, file_data in churn_data["file_churn"].items():
-
-        # Calculate average relative churn rate
-        if file_data["modifications"] > 0:
-            avg_relative_churn = file_data["relative_churn"] / file_data["modifications"]
-        else:
-            avg_relative_churn = 0
-
-        if avg_relative_churn < relative_threshold:
-            good_relative_churn.append(file_path)
-        else:
-            bad_relative_churn.append(file_path)
-
-    return good_relative_churn, bad_relative_churn
-
 def report_code_churn(churn_data, developer_contribution):
     print("\nSummary of Code Churn Analysis:")
     print(f"Total commits analyzed: {churn_data['total_commits']}")
     print(f"Total lines added: {churn_data['total_lines_added']}")
     print(f"Total lines deleted: {churn_data['total_lines_deleted']}")
     print(f"Total files changed: {len(churn_data['total_files_changed'])}")
+
+    metrics = {}
+    for file_path, data in churn_data["file_churn"].items():
+        churned_loc = data["churned_loc"]
+        deleted_loc = data["deleted_loc"]
+        total_loc = data["total_loc"]
+        churn_count = data["churn_count"]
+
+        metrics[file_path] = {
+            "M1 (Churned LOC / Total LOC)": churned_loc / total_loc if total_loc > 0 else 0,
+            "M2 (Deleted LOC / Total LOC)": deleted_loc / total_loc if total_loc > 0 else 0,
+            "M3 (Files Churned / File Count)": len(churn_data["total_files_changed"]) / len(churn_data["file_churn"]) if len(churn_data["file_churn"]) > 0 else 0,
+            "M4 (Churn Count / Files Churned)": churn_count / len(churn_data["file_churn"]) if len(churn_data["file_churn"]) > 0 else 0,
+            # "M5 (Weeks of Churn / File Count)": churn_data["weeks_of_churn"] / len(churn_data["file_churn"]) if len(churn_data["file_churn"]) > 0 else 0,
+            # "M6 (Lines Worked On / Weeks of Churn)": churn_data["lines_worked_on"] / churn_data["weeks_of_churn"] if churn_data["weeks_of_churn"] > 0 else 0,
+            "M7 (Churned LOC / Deleted LOC)": churned_loc / deleted_loc if deleted_loc > 0 else 0,
+            # "M8 (Lines Worked On / Churn Count)": churn_data["lines_worked_on"] / churn_count if churn_count > 0 else 0,
+        }
+
+    for file_path, metrics_data in metrics.items():
+        print(f"\nMetrics for {file_path}:")
+        for metric, value in metrics_data.items():
+            print(f"  {metric}: {value:.2f}")
 
     # Sort and display the results
     # sorted_files = sorted(
@@ -70,16 +73,3 @@ def report_code_churn(churn_data, developer_contribution):
     #     print(f" - Churn Frequency: {file_data['churn_frequency']}")
     #     print(f" - Contributors: {', '.join(file_data['contributors'])}")
     #     print("=" * 80)
-
-    # Classify relative churn as good or bad
-    good_relative_churn, bad_relative_churn = classify_churn(churn_data)
-
-
-    print(f"\nGood Churn Files: {len(good_relative_churn)}")
-    print(f"\nBad Churn Files: {len(bad_relative_churn)}")
-    # for file in bad_churn:
-    #    print(f"  - {file}")
-
-    print("\nDeveloper contributions")
-    for dev, commits in developer_contribution.items():
-        print(f"{dev}: {commits} commits")
