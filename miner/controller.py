@@ -1,3 +1,4 @@
+from miner.analyzers.analyze_churn_and_predict_fixes import analyze_churn_and_predict_fixes
 from miner.analyzers.analyze_code_churn import analyze_code_churn
 from miner.analyzers.commit_analyzer import analyze_commits
 from miner.analyzers.file_path_analyzer import analyze_file_path
@@ -19,22 +20,26 @@ class AnalysisController:
                 "method": self.filtered_fix_commits,
                 "description": "Find commits which message includes a fix keyword"
             },
-            "Commit Analyzer": {
-                "method": self.run_commit_analyzer,
-                "description": "Analyzes commits for test file changes and fix keywords"
+            "Analyze Fix VS. Non-Fix Code churn": {
+                "method": lambda: analyze_churn_and_predict_fixes(self.repo_path),
+                "description": "Does code churn differ between commits with fixes and non-fixes. (Mann-Whitney U-test)"
             },
-            "Test Debt Analyzer": {
-                "method": self.run_test_debt_analyzer,
-                "description": "Analyzes commits for test additions, feature additions, and testing debt"
-            },
+            # "Commit Analyzer": {
+            #     "method": self.run_commit_analyzer,
+            #     "description": "Analyzes commits for test file changes and fix keywords"
+            # },
+            # "Test Debt Analyzer": {
+            #     "method": self.run_test_debt_analyzer,
+            #     "description": "Analyzes commits for test additions, feature additions, and testing debt"
+            # },
             "Code Churn Analyzer": {
                 "method": self.run_code_churn_analyzer,
                 "description": "Analyzes code churn metrics across all commits."
             },
-            "File Path Analyzer": {
-                "method": self.run_code_file_path_analyzer,
-                "description": "Analyzes changes to a specific file path in the repository."
-            }
+            # "File Path Analyzer": {
+            #     "method": self.run_code_file_path_analyzer,
+            #     "description": "Analyzes changes to a specific file path in the repository."
+            # }
         }
 
     @staticmethod
@@ -60,35 +65,38 @@ class AnalysisController:
 
         self.traverse_commits(process_commit, filters=[self.contains_fix_keyword])
 
-    def run_commit_analyzer(self):
-        commit_data = {
-            "single_test_file_commits": 0,
-            "multiple_test_file_commits": 0
-        }
 
-        def process_commit(commit):
-            analyze_commits(commit, commit_data, self.test_directories)
 
-        self.traverse_commits(process_commit, filters=[self.contains_fix_keyword])
-        commit_data["fix_commit_count"] = self.commit_count
 
-        display_commit_results(commit_data)
+    # def run_commit_analyzer(self):
+    #     commit_data = {
+    #         "single_test_file_commits": 0,
+    #         "multiple_test_file_commits": 0
+    #     }
+    #
+    #     def process_commit(commit):
+    #         analyze_commits(commit, commit_data, self.test_directories)
+    #
+    #     self.traverse_commits(process_commit, filters=[self.contains_fix_keyword])
+    #     commit_data["fix_commit_count"] = self.commit_count
+    #
+    #     display_commit_results(commit_data)
 
-    def run_test_debt_analyzer(self):
-        debt_data = {
-            "commits_with_tests": 0,
-            "commits_without_tests": 0,
-            "total_feature_additions": 0,
-            "total_test_additions": 0,
-            "debt_commits": []
-        }
-
-        def process_commit(commit):
-            analyze_testing_debt(commit, debt_data, self.test_directories)
-
-        self.traverse_commits(process_commit)
-
-        display_testing_debt_results(debt_data)
+    # def run_test_debt_analyzer(self):
+    #     debt_data = {
+    #         "commits_with_tests": 0,
+    #         "commits_without_tests": 0,
+    #         "total_feature_additions": 0,
+    #         "total_test_additions": 0,
+    #         "debt_commits": []
+    #     }
+    #
+    #     def process_commit(commit):
+    #         analyze_testing_debt(commit, debt_data, self.test_directories)
+    #
+    #     self.traverse_commits(process_commit)
+    #
+    #     display_testing_debt_results(debt_data)
 
     def run_code_churn_analyzer(self):
         churn_data = {
